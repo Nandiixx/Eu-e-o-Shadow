@@ -1,2 +1,2 @@
-# Eu-e-o-Shadow
-TCC 
+# My beauty
+Projeto TCC

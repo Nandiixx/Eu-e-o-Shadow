@@ -1,0 +1,110 @@
+:root {
+            --color1: #ea638cff;
+            --color2: #1b2021ff;
+            --color3: #ffd9daff;
+            --color4: #ea638cff;
+            --color5: #ea638cff;
+
+            --cherry-blossom-pink: #edafb8ff;
+            --champagne-pink: #f7e1d7ff;
+            --timberwolf: #dedbd2ff;
+            --ash-gray: #b0c4b1ff;
+            --outer-space: #4a5759ff;
+
+
+            --dark-red: #8c1c13ff;
+            --bittersweet-shimmer: #bf4342ff;
+            --almond: #e7d7c1ff;
+            --beaver: #a78a7fff;
+            --liver: #735751ff;
+
+            --misty-rose: #ffd9daff;
+            --blush: #ea638cff;
+            --murrey: #89023eff;
+            --gunmetal: #30343fff;
+            --eerie-black: #1b2021ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color:  #FFFFFF;
+            color: #000000;
+        }
+
+        header {
+            background-color: #FFFFFF;
+            color: #1b2021ff;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        nav {
+            background-color:  #FFFFFF;
+            padding: 1rem;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: #000000;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        nav a:hover {
+            color: var(--color1);
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background-color: var(--color3);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            color: #000000;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--color1);
+            padding-bottom: 0.5rem;
+        }
+
+        footer {
+            background-color: var(--color3);
+            color: var(--color2);
+            text-align: center;
+            padding: 1rem;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
