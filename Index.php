@@ -31,7 +31,7 @@
                 <div class="alert-error" role="alert">E-mail ou senha inválidos.</div>
                 <?php endif; ?>
 
-                <form class="auth-form" action="dashboard.php" method="POST" novalidate>
+                <form class="auth-form" action="Views/inicio_profissionalbk.php" method="POST" novalidate>
                     <div class="input-field">
                         <span class="input-icon" aria-hidden="true">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -63,7 +63,7 @@
                 <div class="auth-divider" role="separator" aria-label="ou"></div>
 
                 <div class="auth-cta">
-                    <p class="auth-cta-text">Você ainda não tem uma conta? <a class="auth-cta-link" href="Views/cliente/cadastrar.php"><strong>Registre-se</strong></a></p>
+                    <p class="auth-cta-text">Você ainda não tem uma conta? <a class="auth-cta-link" href="Views/cadastrar.php"><strong>Registre-se</strong></a></p>
                 </div>
             </div>
         </section>
