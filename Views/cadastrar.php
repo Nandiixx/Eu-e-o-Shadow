@@ -1,41 +1,7 @@
 <?php
-require_once '../Models/Cliente.php';
-
-// Processa o formulário quando enviado
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $erro = null;
-    
-    // Validações
-    if (empty($_POST['nome']) || empty($_POST['email']) || empty($_POST['senha']) || 
-        empty($_POST['confirma_senha']) || empty($_POST['telefone'])) {
-        $erro = "Todos os campos obrigatórios devem ser preenchidos.";
-    }
-    else if ($_POST['senha'] !== $_POST['confirma_senha']) {
-        $erro = "As senhas não coincidem.";
-    }
-    else if (strlen($_POST['senha']) < 6) {
-        $erro = "A senha deve ter pelo menos 6 caracteres.";
-    }
-    else if (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
-        $erro = "E-mail inválido.";
-    }
-    else {
-        // Tenta cadastrar
-        $cliente = new Cliente();
-        $cliente->setNome($_POST['nome']);
-        $cliente->setEmail($_POST['email']);
-        $cliente->setSenha($_POST['senha']);
-        $cliente->setTelefone($_POST['telefone']);
-
-        if ($cliente->inserirBD()) {
-            // Redireciona em caso de sucesso
-            header("Location: login.php?cadastro=sucesso");
-            exit;
-        } else {
-            $erro = "Erro ao cadastrar. Por favor, tente novamente.";
-        }
-    }
-}
+// A variável $erro é definida pelo UsuarioController caso a validação falhe.
+// A variável $sucesso é definida pelo UsuarioController ao exibir a view.
+// (Não precisamos de lógica aqui, apenas exibir as variáveis que o Controller nos envia)
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -69,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="alert-error" role="alert"><?php echo htmlspecialchars($erro); ?></div>
                 <?php endif; ?>
 
-                <form class="auth-form" method="POST" action="" novalidate>
+                <form class="auth-form" method="POST" action="../index.php?acao=salvar_cliente" novalidate>
                     <div class="form-grid-2">
                         <div class="input-field">
                             <span class="input-icon" aria-hidden="true">
@@ -129,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="auth-divider" role="separator" aria-label="ou"></div>
 
                 <div class="auth-cta">
-                    <p class="auth-cta-text">Já tem uma conta? <a class="auth-cta-link" href="../index.php">Entrar</a></p>
+                    <p class="auth-cta-text">Já tem uma conta? <a class="auth-cta-link" href="../index.php?acao=login_mostrar">Entrar</a></p>
                 </div>
             </div>
         </section>

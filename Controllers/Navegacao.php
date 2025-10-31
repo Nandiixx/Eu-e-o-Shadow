@@ -1,14 +1,47 @@
 <?php
-// ... (includes e verificação de $acao) ...
+// Inicia a sessão para todas as requisições
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-// Estrutura switch para gerenciar as ações (Agenda 13)
+// Inclui os controllers principais
+require_once 'Controllers/UsuarioController.php';
+require_once 'Controllers/AgendamentoController.php';
+
+// Instancia os controllers
+$userController = new UsuarioController();
+$agendamentoController = new AgendamentoController();
+
+// Define a ação padrão (mostrar login) se nenhuma for especificada
+$acao = $_GET['acao'] ?? 'login_mostrar';
+
+// Estrutura switch para gerenciar as ações (Roteamento)
 switch ($acao) {
-    // ... (cases de login/cadastro/logout permanecem iguais) ...
+
+    // --- FLUXO DE AUTENTICAÇÃO E CADASTRO ---
+    case 'login_mostrar':
+        $userController->mostrarLogin();
+        break;
+
+    case 'autenticar': // Ação do formulário de login
+        $userController->autenticar();
+        break;
+
+    case 'cadastro_mostrar':
+        $userController->mostrarCadastro();
+        break;
+    
+    case 'salvar_cliente': // Ação do formulário de cadastro
+        $userController->salvarCadastroCliente();
+        break;
+
+    case 'logout':
+        $userController->logout();
+        break;
 
     // --- FLUXO PRINCIPAL (APÓS LOGIN) ---
     case 'inicio':
-        // $userController->mostrarInicio(); // Linha antiga
-        $userController->direcionarDashboard(); // <--- NOVA LINHA
+        $userController->direcionarDashboard(); // Direciona para o dashboard correto
         break;
     
     // --- FLUXO DE AGENDAMENTO (CLIENTE) ---
@@ -20,41 +53,33 @@ switch ($acao) {
         $agendamentoController->salvar(); // (Ação do Cliente)
         break;
         
-    // --- (NOVO) FLUXO DE AGENDA (PROFISSIONAL) ---
+    // --- FLUXO DE AGENDA (PROFISSIONAL) ---
     case 'agenda_profissional_mostrar':
         $agendamentoController->mostrarAgendaProfissional();
         break;
 
-    // Adicione estes cases ao switch em Controllers/Navegacao.php
-
     case 'confirmar':
-        require_once 'Controllers/AgendamentoController.php';
-        $controller = new AgendamentoController();
-        
         if (isset($_GET['id'])) {
             $idAgendamento = $_GET['id'];
-            $idStatusConfirmado = 2; // ID 'CONFIRMADO' do seu database.sql
+            $idStatusConfirmado = 2; // ID 'CONFIRMADO'
             
-            if ($controller->mudarStatusAgendamento($idAgendamento, $idStatusConfirmado)) {
-                echo "<script>alert('Agendamento confirmado com sucesso!'); window.location.href='index.php?acao=agenda_profissional';</script>";
+            if ($agendamentoController->mudarStatusAgendamento($idAgendamento, $idStatusConfirmado)) {
+                echo "<script>alert('Agendamento confirmado!'); window.location.href='../index.php?acao=agenda_profissional_mostrar';</script>";
             } else {
-                echo "<script>alert('Erro ao confirmar o agendamento.'); window.location.href='index.php?acao=agenda_profissional';</script>";
+                echo "<script>alert('Erro ao confirmar.'); window.location.href='../index.php?acao=agenda_profissional_mostrar';</script>";
             }
         }
         break;
 
     case 'cancelar':
-        require_once 'Controllers/AgendamentoController.php';
-        $controller = new AgendamentoController();
-        
-        if (isset($_GET['id'])) {
+         if (isset($_GET['id'])) {
             $idAgendamento = $_GET['id'];
-            $idStatusCancelado = 3; // ID 'CANCELADO' do seu database.sql
+            $idStatusCancelado = 3; // ID 'CANCELADO'
             
-            if ($controller->mudarStatusAgendamento($idAgendamento, $idStatusCancelado)) {
-                echo "<script>alert('Agendamento cancelado.'); window.location.href='index.php?acao=agenda_profissional';</script>";
+            if ($agendamentoController->mudarStatusAgendamento($idAgendamento, $idStatusCancelado)) {
+                echo "<script>alert('Agendamento cancelado.'); window.location.href='../index.php?acao=agenda_profissional_mostrar';</script>";
             } else {
-                echo "<script>alert('Erro ao cancelar o agendamento.'); window.location.href='index.php?acao=agenda_profissional';</script>";
+                echo "<script>alert('Erro ao cancelar.'); window.location.href='../index.php?acao=agenda_profissional_mostrar';</script>";
             }
         }
         break;
