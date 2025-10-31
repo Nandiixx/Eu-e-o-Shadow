@@ -1,7 +1,7 @@
 <?php
 /*
 * Modelo para a tabela 'Usuario'.
-* Utiliza password_hash da Agenda 15 para segurança.
+* Utiliza password_hash para segurança das senhas.
 */
 class Usuario
 {
@@ -10,7 +10,7 @@ class Usuario
     private $email;
     private $senha_hash;
 
-    // --- Getters e Setters (Agenda 09) ---
+    // --- Getters e Setters ---
     public function setId($id) { $this->id = $id; }
     public function getId() { return $this->id; }
     public function setNome($nome) { $this->nome = $nome; }
@@ -18,79 +18,86 @@ class Usuario
     public function setEmail($email) { $this->email = $email; }
     public function getEmail() { return $this->email; }
     
-    // Método de segurança da Agenda 15
     public function setSenha($senha) {
         $this->senha_hash = password_hash($senha, PASSWORD_DEFAULT);
     }
     
     public function getSenhaHash() { return $this->senha_hash; }
 
-    // --- Métodos de Banco de Dados (Agenda 11) ---
+    // --- Métodos de Banco de Dados ---
 
-    public function inserirBD()
+    /**
+     * Insere um novo usuário no banco de dados
+     * @param PDO $pdo Conexão PDO ativa (opcional, se não fornecida, cria nova conexão)
+     * @return int|false ID do usuário inserido ou false em caso de erro
+     */
+    public function inserirBD($pdo = null)
     {
-        require_once 'ConexaoBD.php';
-        $con = new ConexaoBD();
-        $conn = $con->conectar();
-
-        if ($conn->connect_error) {
-            die("Connection failed: " . $conn->connect_error);
-        }
-
-        $sql = "INSERT INTO Usuario (nome, email, senha_hash) VALUES (?, ?, ?)";
+        $needsNewConnection = $pdo === null;
         
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sss", $this->nome, $this->email, $this->senha_hash);
+        try {
+            if ($needsNewConnection) {
+                require_once 'ConexaoDB.php';
+                $pdo = Database::getConnection();
+                $pdo->beginTransaction();
+            }
 
-        if ($stmt->execute() === TRUE) {
-            $this->id = $conn->insert_id; // Pega o ID gerado
-            $stmt->close();
-            $conn->close();
-            return $this->id; // Retorna o ID do novo usuário
-        } else {
-            $stmt->close();
-            $conn->close();
+            $sql = "INSERT INTO Usuario (nome, email, senha_hash) VALUES (:nome, :email, :senha_hash)";
+            
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':nome' => $this->nome,
+                ':email' => $this->email,
+                ':senha_hash' => $this->senha_hash
+            ]);
+
+            $this->id = $pdo->lastInsertId();
+
+            if ($needsNewConnection) {
+                $pdo->commit();
+            }
+
+            return $this->id;
+
+        } catch (Exception $e) {
+            if ($needsNewConnection && isset($pdo)) {
+                $pdo->rollBack();
+            }
+            error_log("Error in Usuario::inserirBD: " . $e->getMessage());
             return false;
         }
     }
 
     public function carregarUsuarioPorEmail($email)
     {
-        require_once 'ConexaoBD.php';
-        $con = new ConexaoBD();
-        $conn = $con->conectar();
+        require_once 'ConexaoDB.php';
+        try {
+            $pdo = Database::getConnection();
 
-        if ($conn->connect_error) {
-            die("Connection failed: " . $conn->connect_error);
-        }
+            $sql = "SELECT * FROM Usuario WHERE email = :email";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([':email' => $email]);
 
-        $sql = "SELECT * FROM Usuario WHERE email = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $email);
+            $row = $stmt->fetch(PDO::FETCH_OBJ);
 
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $r = $result->fetch_object();
+            if ($row) {
+                $this->id = $row->id;
+                $this->nome = $row->nome;
+                $this->email = $row->email;
+                $this->senha_hash = $row->senha_hash;
+                return true;
+            }
+            
+            return false;
 
-        if ($r != null) {
-            $this->id = $r->id;
-            $this->nome = $r->nome;
-            $this->email = $r->email;
-            $this->senha_hash = $r->senha_hash;
-            $stmt->close();
-            $conn->close();
-            return true;
-        } else {
-            $stmt->close();
-            $conn->close();
+        } catch (Exception $e) {
+            error_log("Error in Usuario::carregarUsuarioPorEmail: " . $e->getMessage());
             return false;
         }
     }
 
-    // Verifica a senha usando a técnica da Agenda 15
     public function verificarSenha($senha)
     {
         return password_verify($senha, $this->senha_hash);
     }
 }
-?>

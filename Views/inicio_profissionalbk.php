@@ -3,7 +3,7 @@ require_once __DIR__ . '/bootstrap.php';
 
 $appointments = [];
 try {
-    $pdo = db();
+    $pdo = Database::getConnection();
     if (!$pdo) throw new Exception('Sem conexão com o banco de dados');
 
     $sql = "SELECT ag.id, ag.data_hora, ag.status,

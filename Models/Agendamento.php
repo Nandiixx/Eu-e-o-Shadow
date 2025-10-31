@@ -20,146 +20,128 @@ class Agendamento
     
     public function inserirBD()
     {
-        require_once 'ConexaoBD.php';
-        $con = new ConexaoBD();
-        $conn = $con->conectar();
-
-        if ($conn->connect_error) {
-            die("Connection failed: " . $conn->connect_error);
-        }
-        
-        // Inicia transação
-        $conn->begin_transaction();
-
+        require_once 'ConexaoDB.php';
         try {
+            $pdo = Database::getConnection();
+            
+            // Inicia transação
+            $pdo->beginTransaction();
+
             // 1. Insere na tabela Agendamento
             $sql = "INSERT INTO Agendamento (cliente_id, profissional_id, data_hora, status) 
-                    VALUES (?, ?, ?, ?)";
+                    VALUES (:cliente_id, :profissional_id, :data_hora, :status)";
             
-            $stmt = $conn->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $status = 'AGENDADO'; // Default
-            $stmt->bind_param("iiss", $this->cliente_id, $this->profissional_id, $this->data_hora, $status);
+            $stmt->execute([
+                ':cliente_id' => $this->cliente_id,
+                ':profissional_id' => $this->profissional_id,
+                ':data_hora' => $this->data_hora,
+                ':status' => $status
+            ]);
             
-            if (!$stmt->execute()) {
-                throw new Exception("Erro ao agendar.");
-            }
-            
-            $agendamento_id = $conn->insert_id;
-            $stmt->close();
+            $agendamento_id = $pdo->lastInsertId();
 
             // 2. Insere na tabela Agendamento_Servicos
-            $sql_serv = "INSERT INTO Agendamento_Servicos (agendamento_id, servico_id) VALUES (?, ?)";
-            $stmt_serv = $conn->prepare($sql_serv);
+            $sql_serv = "INSERT INTO Agendamento_Servicos (agendamento_id, servico_id) VALUES (:agendamento_id, :servico_id)";
+            $stmt_serv = $pdo->prepare($sql_serv);
 
             foreach ($this->servicos as $servico_id) {
-                $stmt_serv->bind_param("ii", $agendamento_id, $servico_id);
-                if (!$stmt_serv->execute()) {
-                    throw new Exception("Erro ao ligar serviços.");
-                }
+                $stmt_serv->execute([
+                    ':agendamento_id' => $agendamento_id,
+                    ':servico_id' => $servico_id
+                ]);
             }
             
-            $stmt_serv->close();
-            
             // Se tudo deu certo, comita
-            $conn->commit();
-            $conn->close();
+            $pdo->commit();
             return true;
 
         } catch (Exception $e) {
             // Se algo deu errado, faz rollback
-            $conn->rollback();
-            $conn->close();
+            if (isset($pdo)) {
+                $pdo->rollBack();
+            }
+            error_log("Error in inserirBD: " . $e->getMessage());
             return false;
         }
     }
     
     public function listarAgendamentosCliente($cliente_id)
     {
-        require_once 'ConexaoBD.php';
-        $con = new ConexaoBD();
-        $conn = $con->conectar();
-        $lista = [];
+        require_once 'ConexaoDB.php';
+        try {
+            $pdo = Database::getConnection();
+            $lista = [];
 
-        if ($conn->connect_error) {
-            die("Connection failed: " . $conn->connect_error);
-        }
+            // Query complexa para buscar nomes em vez de IDs
+            $sql = "SELECT 
+                        a.id,
+                        c_user.nome AS cliente_nome,
+                        f_user.nome AS profissional_nome,
+                        GROUP_CONCAT(s.nome SEPARATOR ', ') AS servicos,
+                        a.data_hora,
+                        a.status
+                    FROM Agendamento a
+                    JOIN Cliente c ON a.cliente_id = c.id
+                    JOIN Usuario c_user ON c.usuario_id = c_user.id
+                    JOIN Funcionario f ON a.profissional_id = f.id
+                    JOIN Usuario f_user ON f.usuario_id = f_user.id
+                    JOIN Agendamento_Servicos asv ON a.id = asv.agendamento_id
+                    JOIN Servico s ON asv.servico_id = s.id
+                    WHERE c.id = :cliente_id
+                    GROUP BY a.id
+                    ORDER BY a.data_hora DESC";
 
-        // Query complexa para buscar nomes em vez de IDs
-        $sql = "SELECT 
-                    a.id,
-                    c_user.nome AS cliente_nome,
-                    f_user.nome AS profissional_nome,
-                    GROUP_CONCAT(s.nome SEPARATOR ', ') AS servicos,
-                    a.data_hora,
-                    a.status
-                FROM Agendamento a
-                JOIN Cliente c ON a.cliente_id = c.id
-                JOIN Usuario c_user ON c.usuario_id = c_user.id
-                JOIN Funcionario f ON a.profissional_id = f.id
-                JOIN Usuario f_user ON f.usuario_id = f_user.id
-                JOIN Agendamento_Servicos asv ON a.id = asv.agendamento_id
-                JOIN Servico s ON asv.servico_id = s.id
-                WHERE c.id = ?
-                GROUP BY a.id
-                ORDER BY a.data_hora DESC";
-
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $cliente_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        if ($result->num_rows > 0) {
-             while($r = $result->fetch_object()) {
-                $lista[] = $r;
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([':cliente_id' => $cliente_id]);
+            
+            while ($row = $stmt->fetch(PDO::FETCH_OBJ)) {
+                $lista[] = $row;
             }
+            
+            return $lista;
+
+        } catch (Exception $e) {
+            error_log("Error in listarAgendamentosCliente: " . $e->getMessage());
+            return [];
         }
-        
-        $stmt->close();
-        $conn->close();
-        return $lista;
     }
+
     public function listarAgendaPorProfissional($profissional_id)
     {
-        require_once 'ConexaoBD.php';
-        $con = new ConexaoBD();
-        $conn = $con->conectar();
-        $lista = [];
+        require_once 'ConexaoDB.php';
+        try {
+            $pdo = Database::getConnection();
+            $lista = [];
 
-        if ($conn->connect_error) {
-            die("Connection failed: " . $conn->connect_error);
-        }
+            $sql = "SELECT 
+                        a.id,
+                        c_user.nome AS cliente_nome,
+                        GROUP_CONCAT(s.nome SEPARATOR ', ') AS servicos,
+                        a.data_hora,
+                        a.status
+                    FROM Agendamento a
+                    JOIN Cliente c ON a.cliente_id = c.id
+                    JOIN Usuario c_user ON c.usuario_id = c_user.id
+                    JOIN Agendamento_Servicos asv ON a.id = asv.agendamento_id
+                    JOIN Servico s ON asv.servico_id = s.id
+                    WHERE a.profissional_id = :profissional_id
+                    GROUP BY a.id
+                    ORDER BY a.data_hora ASC";
 
-        // Query similar à do cliente, mas filtrando por a.profissional_id
-        // E trazendo o nome do Cliente
-        $sql = "SELECT 
-                    a.id,
-                    c_user.nome AS cliente_nome,
-                    GROUP_CONCAT(s.nome SEPARATOR ', ') AS servicos,
-                    a.data_hora,
-                    a.status
-                FROM Agendamento a
-                JOIN Cliente c ON a.cliente_id = c.id
-                JOIN Usuario c_user ON c.usuario_id = c_user.id
-                JOIN Agendamento_Servicos asv ON a.id = asv.agendamento_id
-                JOIN Servico s ON asv.servico_id = s.id
-                WHERE a.profissional_id = ?  -- Filtro principal
-                GROUP BY a.id
-                ORDER BY a.data_hora ASC"; // Profissionais preferem ver os próximos
-
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $profissional_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        if ($result->num_rows > 0) {
-             while($r = $result->fetch_object()) {
-                $lista[] = $r;
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([':profissional_id' => $profissional_id]);
+            
+            while ($row = $stmt->fetch(PDO::FETCH_OBJ)) {
+                $lista[] = $row;
             }
+            
+            return $lista;
+
+        } catch (Exception $e) {
+            error_log("Error in listarAgendaPorProfissional: " . $e->getMessage());
+            return [];
         }
-        
-        $stmt->close();
-        $conn->close();
-        return $lista;
     }
 }
-?>

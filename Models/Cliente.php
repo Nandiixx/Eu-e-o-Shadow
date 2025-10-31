@@ -18,6 +18,7 @@ class Cliente
     }
 
     // --- Getters e Setters ---
+    public function getId() { return $this->id; }
     public function setTelefone($telefone) { $this->telefone = $telefone; }
     
     // Métodos do objeto Usuario encapsulado
@@ -25,40 +26,39 @@ class Cliente
     public function setEmail($email) { $this->usuario->setEmail($email); }
     public function setSenha($senha) { $this->usuario->setSenha($senha); }
 
-    // --- Métodos de Banco de Dados (Agenda 11) ---
+    // --- Métodos de Banco de Dados ---
 
-    // Insere o Usuário e depois o Cliente
     public function inserirBD()
     {
-        // 1. Insere o Usuário base
-        $this->usuario_id = $this->usuario->inserirBD();
-        
-        if ($this->usuario_id === false) {
-            return false; // Falha ao criar usuário
-        }
+        require_once 'ConexaoDB.php';
+        try {
+            $pdo = Database::getConnection();
+            $pdo->beginTransaction();
 
-        // 2. Insere o Cliente linkando o usuario_id
-        require_once 'ConexaoBD.php';
-        $con = new ConexaoBD();
-        $conn = $con->conectar();
+            // 1. Insere o Usuário base
+            $this->usuario_id = $this->usuario->inserirBD($pdo);
+            
+            if (!$this->usuario_id) {
+                throw new Exception('Falha ao criar usuário');
+            }
 
-        if ($conn->connect_error) {
-            die("Connection failed: " . $conn->connect_error);
-        }
+            // 2. Insere o Cliente linkando o usuario_id
+            $sql = "INSERT INTO Cliente (usuario_id, telefone) VALUES (:usuario_id, :telefone)";
+            
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':usuario_id' => $this->usuario_id,
+                ':telefone' => $this->telefone
+            ]);
 
-        $sql = "INSERT INTO Cliente (usuario_id, telefone) VALUES (?, ?)";
-        
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("is", $this->usuario_id, $this->telefone);
-
-        if ($stmt->execute() === TRUE) {
-            $stmt->close();
-            $conn->close();
+            $pdo->commit();
             return true;
-        } else {
-            // TODO: Idealmente, deveria deletar o usuário criado se o cliente falhar (transação)
-            $stmt->close();
-            $conn->close();
+
+        } catch (Exception $e) {
+            if (isset($pdo)) {
+                $pdo->rollBack();
+            }
+            error_log("Error in Cliente::inserirBD: " . $e->getMessage());
             return false;
         }
     }
@@ -66,30 +66,28 @@ class Cliente
     // Carrega um cliente pelo ID do usuário
     public function carregarClientePorUsuarioId($usuario_id)
     {
-        require_once 'ConexaoBD.php';
-        $con = new ConexaoBD();
-        $conn = $con->conectar();
+        require_once 'ConexaoDB.php';
+        try {
+            $pdo = Database::getConnection();
 
-        $sql = "SELECT * FROM Cliente WHERE usuario_id = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $usuario_id);
+            $sql = "SELECT * FROM Cliente WHERE usuario_id = :usuario_id";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([':usuario_id' => $usuario_id]);
 
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $r = $result->fetch_object();
+            $row = $stmt->fetch(PDO::FETCH_OBJ);
 
-        if ($r != null) {
-            $this->id = $r->id;
-            $this->usuario_id = $r->usuario_id;
-            $this->telefone = $r->telefone;
-            $stmt->close();
-            $conn->close();
-            return true;
+            if ($row) {
+                $this->id = $row->id;
+                $this->usuario_id = $row->usuario_id;
+                $this->telefone = $row->telefone;
+                return true;
+            }
+            
+            return false;
+
+        } catch (Exception $e) {
+            error_log("Error in Cliente::carregarClientePorUsuarioId: " . $e->getMessage());
+            return false;
         }
-        
-        $stmt->close();
-        $conn->close();
-        return false;
     }
 }
-?>

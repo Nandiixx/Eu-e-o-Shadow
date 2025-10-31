@@ -3,26 +3,23 @@ class Servico
 {
     public function listarTodos()
     {
-        require_once 'ConexaoBD.php';
-        $con = new ConexaoBD();
-        $conn = $con->conectar();
-        $lista = [];
+        require_once 'ConexaoDB.php';
+        try {
+            $pdo = Database::getConnection();
+            $lista = [];
 
-        if ($conn->connect_error) {
-            die("Connection failed: " . $conn->connect_error);
-        }
-
-        $sql = "SELECT id, nome, preco, duracao_minutos FROM Servico";
-        $re = $conn->query($sql);
-        
-        if ($re->num_rows > 0) {
-             while($r = $re->fetch_object()) {
-                $lista[] = $r;
+            $sql = "SELECT id, nome, preco, duracao_minutos FROM Servico";
+            $stmt = $pdo->query($sql);
+            
+            while ($row = $stmt->fetch(PDO::FETCH_OBJ)) {
+                $lista[] = $row;
             }
+            
+            return $lista;
+
+        } catch (Exception $e) {
+            error_log("Error in Servico::listarTodos: " . $e->getMessage());
+            return [];
         }
-        
-        $conn->close();
-        return $lista;
     }
 }
-?>
