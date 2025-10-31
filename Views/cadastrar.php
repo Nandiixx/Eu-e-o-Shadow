@@ -1,4 +1,3 @@
-<?php require_once __DIR__ . '/../../includes/db_include.php'; ?>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
