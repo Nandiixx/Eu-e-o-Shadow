@@ -57,16 +57,6 @@ class UsuarioController
         }
     }
 
-    public function mostrarInicio()
-    {
-        // Esta função não é mais usada diretamente, será substituída por direcionarDashboard
-        if (!$this->checkLogin()) {
-            header('Location: index.php?acao=login_mostrar');
-            exit;
-        }
-        include_once '../View/inicio.php';
-    }
-
     /**
      * (NOVA FUNÇÃO)
      * Verifica o tipo de usuário na sessão e carrega o dashboard correto.
@@ -83,7 +73,7 @@ class UsuarioController
             switch ($_SESSION['usuario_tipo']) {
                 case 'CLIENTE':
                     // Mostra o dashboard padrão do cliente
-                    include_once '../View/inicio.php'; 
+                    include_once '../View/inicio_cliente.php'; 
                     break;
                 case 'PROFISSIONAL':
                     // Mostra o novo dashboard do profissional

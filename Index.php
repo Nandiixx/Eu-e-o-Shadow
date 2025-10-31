@@ -1,3 +1,14 @@
+<?php
+session_start();
+require_once 'Controllers/UsuarioController.php';
+
+$usuarioController = new UsuarioController();
+
+// Processa o login
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $usuarioController->autenticar();
+}
+?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -27,11 +38,11 @@
                     </div>
                 </div>
 
-                <?php if (isset($_GET['erro'])): ?>
-                <div class="alert-error" role="alert">E-mail ou senha inválidos.</div>
+                <?php if (isset($erro)): ?>
+                <div class="alert-error" role="alert"><?php echo htmlspecialchars($erro); ?></div>
                 <?php endif; ?>
 
-                <form class="auth-form" action="Views/inicio_profissionalbk.php" method="POST" novalidate>
+                <form class="auth-form" action="index.php?acao=autenticar" method="POST" novalidate>
                     <div class="input-field">
                         <span class="input-icon" aria-hidden="true">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
