@@ -144,4 +144,41 @@ class Agendamento
             return [];
         }
     }
+    // Adicione este método dentro da classe Agendamento em Models/Agendamento.php
+
+    /**
+     * Atualiza o status de um agendamento específico.
+     * @param int $idAgendamento O ID do agendamento a ser atualizado.
+     * @param int $idStatus O novo ID do status (2 para Confirmado, 3 para Cancelado).
+     * @return bool Retorna true se a atualização foi bem-sucedida, false caso contrário.
+     */
+    public function atualizarStatus($idAgendamento, $idStatus) {
+        require_once 'ConexaoDB.php';
+        try {
+            // Usa o helper Database::getConnection() que retorna um PDO
+            $pdo = Database::getConnection();
+
+            // Mapear IDs numéricos para valores de status esperados no banco
+            if ($idStatus === 2) {
+                $novoStatus = 'CONFIRMADO';
+            } elseif ($idStatus === 3) {
+                $novoStatus = 'CANCELADO';
+            } else {
+                // Caso seja passado uma string ou outro valor, usa diretamente
+                $novoStatus = $idStatus;
+            }
+
+            $sql = "UPDATE Agendamento SET status = :status WHERE id = :id";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':status' => $novoStatus,
+                ':id' => $idAgendamento
+            ]);
+
+            return true;
+        } catch (Exception $e) {
+            error_log("Error in atualizarStatus: " . $e->getMessage());
+            return false;
+        }
+    }
 }

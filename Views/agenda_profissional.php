@@ -40,8 +40,9 @@
                     <td><?= date('d/m/Y H:i', strtotime($a->data_hora)) ?></td>
                     <td><?= $a->status ?></td>
                     <td>
-                        <a href="#">Confirmar</a> | 
-                        <a href="#">Cancelar</a>
+                        <a href="index.php?acao=confirmar&id=<?php echo $agendamento['id']; ?>" class="btn btn-success">Confirmar</a>
+                        
+                        <a href="index.php?acao=cancelar&id=<?php echo $agendamento['id']; ?>" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja cancelar este agendamento?');">Cancelar</a>
                     </td>
                 </tr>
                 <?php 

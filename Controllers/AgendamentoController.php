@@ -84,5 +84,26 @@ class AgendamentoController
         // Inclui a nova View (passando a $lista_agenda_profissional)
         include_once '../View/agenda_profissional.php';
     }
+    // Adicione este método dentro da classe AgendamentoController em Controllers/AgendamentoController.php
+
+    /**
+     * Processa a mudança de status de um agendamento.
+     * @param int $idAgendamento O ID do agendamento.
+     * @param int $idStatus O novo ID do status.
+     * @return bool Resultado da operação.
+     */
+    public function mudarStatusAgendamento($idAgendamento, $idStatus) {
+        // O require_once já deve estar no topo do arquivo, mas caso não esteja
+        // para este método, descomente a linha abaixo.
+        // require_once '../Models/Agendamento.php'; 
+        
+        $agendamento = new Agendamento();
+        
+        if ($agendamento->atualizarStatus($idAgendamento, $idStatus)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
 ?>
